@@ -67,9 +67,11 @@ CREATE POLICY "Allow public read access on profiles"
 CREATE POLICY "Allow public read access on locations"
   ON public.locations FOR SELECT USING (true);
 
--- Allow authenticated users to update their own profile and location
+-- Allow authenticated users to manage their own profile and location
 CREATE POLICY "Allow users to update own profile"
   ON public.profiles FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "Allow users to insert own profile"
+  ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
 CREATE POLICY "Allow users to upsert own location"
   ON public.locations FOR ALL USING (auth.uid() = user_id);
 

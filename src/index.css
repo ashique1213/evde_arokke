@@ -5,6 +5,23 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+  .glass-card {
+    @apply bg-white/70 dark:bg-slate-900/70 backdrop-blur-lg border border-white/40 dark:border-white/10 shadow-xl;
+  }
+  
+  .glass-popup .leaflet-popup-content-wrapper {
+    @apply bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-2xl rounded-xl p-1;
+  }
+  
+  .glass-popup .leaflet-popup-tip {
+    @apply bg-white/80 dark:bg-slate-900/80 backdrop-blur-md;
+  }
+}
+
+:root {
+  --radius: 0.75rem;
+}
 @layer base {
   .theme {
     --font-heading: var(--font-sans);

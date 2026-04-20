@@ -22,7 +22,7 @@ const getMarkerIcon = (status: string, online: boolean) => {
     status === 'In Korome' ? '#22c55e' : 
     status === 'Nearby' ? '#eab308' : 
     status === 'Wayanad' ? '#f97316' :
-    status === 'Outside Kerala' ? '#ef4444' : '#6b7280';
+    status === 'Outside Wayanad' ? '#ef4444' : '#6b7280';
     
   return L.divIcon({
     className: 'custom-div-icon',

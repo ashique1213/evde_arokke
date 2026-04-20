@@ -25,6 +25,6 @@ export function determineStatus(lat: number, lng: number): import('../types').Lo
   if (distance <= 3) return 'In Korome';
   if (distance <= 10) return 'Nearby';
   if (distance <= 80) return 'Wayanad';
-  if (distance <= 600) return 'Outside Kerala'; // Rough bounding
+  if (distance <= 600) return 'Outside Wayanad'; // Rough bounding
   return 'Abroad';
 }

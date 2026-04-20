@@ -9,7 +9,7 @@ export type UserProfile = {
   favorite_meetup: string
 }
 
-export type LocationStatus = 'In Korome' | 'Nearby' | 'Wayanad' | 'Outside Kerala' | 'Abroad'
+export type LocationStatus = 'In Korome' | 'Nearby' | 'Wayanad' | 'Outside Wayanad' | 'Abroad'
 
 export type UserLocation = {
   user_id: string

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from './lib/supabase';
 import { Auth } from './components/Auth';
 import { Dashboard } from './components/Dashboard';
@@ -9,10 +9,12 @@ export default function App() {
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  const watchIdRef = useRef<number | null>(null);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      if (session) handleLocationUpdate(session.user.id);
+      if (session) startTracking(session);
       setLoading(false);
     });
 
@@ -20,29 +22,47 @@ export default function App() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      if (session) handleLocationUpdate(session.user.id);
+      if (session) startTracking(session);
+      else stopTracking();
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      stopTracking();
+    };
   }, []);
 
-  const handleLocationUpdate = async (userId: string) => {
-    if (!('geolocation' in navigator)) return;
+  const stopTracking = () => {
+    if (watchIdRef.current !== null && 'geolocation' in navigator) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
+    }
+  };
 
-    navigator.geolocation.getCurrentPosition(
+  const startTracking = async (currentSession: any) => {
+    if (!('geolocation' in navigator)) return;
+    stopTracking();
+
+    const userId = currentSession.user.id;
+
+    // Make sure profile always exists before tracking loop starts
+    try {
+      await supabase.from('profiles').upsert({
+        id: userId,
+        name: currentSession.user.user_metadata?.full_name || 'Anonymous User',
+        email: currentSession.user.email,
+        avatar_url: currentSession.user.user_metadata?.avatar_url
+      }, { onConflict: 'id' });
+    } catch (err) {
+      console.error("Profile sync err", err);
+    }
+
+    watchIdRef.current = navigator.geolocation.watchPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
         const status = determineStatus(latitude, longitude);
 
         try {
-          // Bulletproof guarantee: Always make sure the profile exists
-          await supabase.from('profiles').upsert({
-            id: userId,
-            name: session?.user?.user_metadata?.full_name || 'Anonymous User',
-            email: session?.user?.email,
-            avatar_url: session?.user?.user_metadata?.avatar_url
-          }, { onConflict: 'id' });
-
           const { error } = await supabase.from('locations').upsert({
             user_id: userId,
             lat: latitude,
@@ -51,9 +71,7 @@ export default function App() {
             last_seen: new Date().toISOString(),
             online: true
           });
-          if (error) {
-            console.error('Error saving location:', error);
-          }
+          if (error) console.error('Error saving location:', error);
         } catch (err) {
           console.error(err);
         }
@@ -62,7 +80,7 @@ export default function App() {
         console.error("Location error", error);
         toast.error("Please enable location to let friends know where you are!");
       },
-      { enableHighAccuracy: true, maximumAge: 0 }
+      { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 }
     );
   };
 
